@@ -52,7 +52,7 @@ module Control.Immortal.Queue
     ( -- * Config
       ImmortalQueue(..)
       -- * Run
-    , processImmortalQueue
+    , processImmortalQueue'
     , QueueId
       -- * Stop
     , closeImmortalQueue
@@ -107,8 +107,8 @@ data ImmortalQueue a =
 
 -- | Start a management thread that creates the queue-processing worker
 -- threads & return a QueueId that can be used to stop the workers.
-processImmortalQueue :: forall a . ImmortalQueue a -> IO QueueId
-processImmortalQueue queue = do
+processImmortalQueue' :: forall a . Bool -> ImmortalQueue a -> IO QueueId
+processImmortalQueue' bound queue = do
     shutdown   <- newEmptyMVar
     asyncQueue <- async $ do
         threads          <- mapM (const makeWorker) [1 .. qThreadCount queue]
@@ -137,7 +137,7 @@ processImmortalQueue queue = do
                                          , wdInputMVar = inputMVar
                                          , wdThread    = thread
                                          }
-        makeData <$> Immortal.create (processAction . makeData)
+        makeData <$> Immortal.create' bound (processAction . makeData)
 
     -- Wait for an input action or the close signal, then process the input
     -- or close by returning.
