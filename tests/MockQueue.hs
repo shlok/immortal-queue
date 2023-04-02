@@ -46,7 +46,7 @@ runPool_ :: Bool -> Maybe Int -> [Task] -> IO ([Integer], [String])
 runPool_ cleanClose waitTime tasks = do
     output  <- newTVarIO ([], [])
     tqueue  <- newTQueueIO
-    workers <- processImmortalQueue $ queueConfig output tqueue
+    workers <- processImmortalQueue' False $ queueConfig output tqueue
     atomically $ mapM_ (writeTQueue tqueue) tasks
     maybe (waitEmpty tqueue) (threadDelay . (* 1000)) waitTime
     if cleanClose then closeImmortalQueue workers else killImmortalQueue workers
